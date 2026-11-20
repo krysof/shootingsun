@@ -61,7 +61,7 @@ const motion=(()=>{
   function resetHero(){if(!h)return;h.prev=null;h.seq=null;h.weight=h.lift=h.pull=h.injury=0;h.roll=0;h.legs.forEach(l=>{l.plant=l.swing=null;l.stance=false});h.ready.visible=false}
   function shot(powered,damage,charged){if(!h)return;let primed=charged&&h.pull>.12;h.seq={t:0,delay:primed?.018:.147,primed,startPull:h.pull,startLift:h.lift,damage,powered,spent:false}}
   function wounded(){if(h)h.injury=.40}
-  function direction(){let dest=locked&&target?.visible&&target.position.distanceTo(pos())<targetRange?target.position.clone():C.position.clone().add(C.getWorldDirection(V()).multiplyScalar(100));return dest}
+  function direction(){return mouseSight.point.clone()}
   function animateHero(dt,move,speed){
     if(!h)return;let {root,pivot,body,pelvis,chest,head,legs,arms,bow,ready,seq}=h;
     let wp=root.position.clone(),t=gameT,distance=h.prev?Math.hypot(wp.x-h.prev.x,wp.z-h.prev.z):0;
@@ -82,7 +82,7 @@ const motion=(()=>{
     let bob=h.weight*(.035+.049*run)*(-Math.cos(phase*2)),shift=h.weight*.075*stance;
     pelvis.position.set(shift,1.33+bob+breath*.009-.16*rollTuck,0);pelvis.rotation.set(-.08*h.weight-.48*rollTuck,-.15*stance*h.weight,-.07*stance*h.weight);
     chest.rotation.set(-.09*h.weight+.034*breath+.73*flinch-.36*rollTuck,-lift*(.86+.27*draw)+h.weight*.22*stance+.22*flinch,-.06*breath*.24+.075*h.weight*stance-.19*flinch+lift*.055);
-    head.rotation.set(-.06*breath-.17*flinch+.14*rollTuck,lift*.88-.10*h.weight*stance,-.04*stance*h.weight);
+    let sight=mouseSight.point,tilt=Math.atan2(sight.y-wp.y-2.2,Math.max(.1,Math.hypot(sight.x-wp.x,sight.z-wp.z)));head.rotation.set(-.06*breath-.17*flinch+.14*rollTuck+clamp(tilt*.49,-.39,.46)*(1-rollTuck),lift*.88-.10*h.weight*stance,-.04*stance*h.weight);
     for(let i=0;i<2;i++){let tail=h.panels[i];tail.rotation.set(-.07-.32*h.weight-.13*Math.sin(phase+i*1.8)*h.weight-.56*rollTuck,.07*Math.sin(t*2.9+i),.06*(i?1:-1)+.06*Math.sin(phase+i))}
     root.updateMatrixWorld(true);
     let footPoses=[],lower=0;for(let l of legs){let a=l.sign,p=(h.phase+(a>0?.5:0))%1,base=V(a*.174,0,0).applyQuaternion(root.quaternion).add(wp),foot;
@@ -98,8 +98,8 @@ const motion=(()=>{
     }
     lower=clamp(lower,0,.24);pelvis.position.y-=lower;for(let {l,hip,goal,a,swing} of footPoses){hip.y-=lower;solve(l,hip,goal,V(a*.12,-.15,-1));l.end.rotateX(swing*(.33+.14*run)-rollTuck*.6)}
     // One bow space drives both hands, bent limbs, moving string centre and the nocked arrow.
-    let dest=direction(),worldBase=body.localToWorld(V(.045,2.11,0)),shootDir=dest.sub(worldBase).normalize().applyQuaternion(body.getWorldQuaternion(new T.Quaternion()).invert());
-    let anchor=body.worldToLocal(head.localToWorld(V(.103,.033,-.112))),extension=Math.max(draw,follow),shoulder=body.worldToLocal(chest.localToWorld(V(-.302,.675,-.005))),offset=anchor.clone().sub(shoulder),proj=offset.dot(shootDir),reach=clamp(-proj+Math.sqrt(Math.max(0,proj*proj+.895**2-offset.lengthSq())),.48,.99),gripAim=anchor.clone().addScaledVector(shootDir,.43+(reach-.43)*extension);
+    let worldAnchor=head.localToWorld(V(.103,.033,-.112)),shootDir=direction().sub(worldAnchor).normalize().applyQuaternion(body.getWorldQuaternion(new T.Quaternion()).invert());
+    let anchor=body.worldToLocal(worldAnchor),extension=Math.max(draw,follow),shoulder=body.worldToLocal(chest.localToWorld(V(-.302,.675,-.005))),offset=anchor.clone().sub(shoulder),proj=offset.dot(shootDir),reach=clamp(-proj+Math.sqrt(Math.max(0,proj*proj+.895**2-offset.lengthSq())),.48,.99),gripAim=anchor.clone().addScaledVector(shootDir,.43+(reach-.43)*extension);
     let carry=V(-.46,1.11+.25*Math.sin(phase)*h.weight,-.08-.35*Math.sin(phase)*h.weight);
     let grip=carry.lerp(gripAim,lift);if(rollTuck)grip.lerp(V(-.25,1.83,-.22),rollTuck*.94);bow.grip.position.copy(grip);
     let pitch=Math.asin(clamp(shootDir.y,-1,1)),az=Math.atan2(-shootDir.x,-shootDir.z);
