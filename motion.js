@@ -98,29 +98,8 @@ const motion=(()=>{
     ready.position.copy(readying?body.worldToLocal(arms[1].end.getWorldPosition(V())):nock);ready.quaternion.copy(bow.grip.quaternion);if(readying)ready.rotateX(-1.05*readying);
     if(loose){let origin=body.localToWorld(nock.clone());h.lastOrigin.copy(origin);seq.spent=true;ready.visible=false;launchBolt(origin,seq.powered,seq.damage,false)}
   }
-  // Curved feather blades with coloured rachis and alternating barbs, drawn as a single surface.
-  function feather(p,x,y,z,tip,width,shade,seedNo){let along=tip.clone(),w=V(-along.z,0,along.x).normalize(),pts=[],col=[],ix=[],uv=[],c=new T.Color(shade);
-    for(let i=0;i<=12;i++){let t=i/12,span=Math.pow(Math.sin(Math.PI*t),.72)*width*(1-.29*t)+.003;for(let j=0;j<5;j++){let s=[-1,-.045,0,.045,1][j],v=along.clone().multiplyScalar(t).addScaledVector(w,s*span*(s<0?.78:1));v.z+=.17*Math.sin(t*Math.PI);v.y+=Math.sin(t*Math.PI)*.10-Math.abs(s)*span*.16;pts.push(v.x,v.y,v.z);uv.push(j/4,t);let glow=j===2?1.44:lerp(1.12,.71,t)*(1+.14*Math.sin(i*2.2+seedNo));let cc=c.clone().multiplyScalar(glow);col.push(cc.r,cc.g,cc.b);if(i&&j){let n=i*5+j;ix.push(n-6,n-1,n,n-6,n,n-5)}}}
-    let g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pts,3));g.setAttribute('color',new T.Float32BufferAttribute(col,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();return mesh(g,b.featherMat,p,x,y,z)}
-  function beak(p,m,upper){let points=upper?[[0,.22,.33],[-.4,.19,.26],[-.79,.085,.10],[-.91,-.10,.015]]:[[0,-.11,.27],[-.42,-.105,.18],[-.70,-.036,.014]],verts=[],ids=[];points.forEach(([z,y,w],i)=>{for(let j=0;j<8;j++){let a=j*tau/8;verts.push(Math.cos(a)*w,y+Math.sin(a)*w*.57,z);if(i){let n=i*8+j,l=i*8+(j+1)%8;ids.push(n-8,l,n,l-8,l,n-8)}}});let g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(verts,3));g.setIndex(ids);g.computeVertexNormals();let o=mesh(g,m,p);o.material.side=T.DoubleSide;return o}
-  function birdFigure(){let root=node(),body=node(root),neck=node(body,0,.37,-1.16),head=node(neck,0,.48,-.53),jaw=node(head,0,-.05,-.4),tail=node(body,0,.08,1.32);
-    b={root,body,neck,head,jaw,tail,spars:[],fans:[],streamers:[],feet:[],phase:0,diveStart:null,lastTele:0,lastYaw:0};
-    let fmat=b.featherMat=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.45,metalness:.42,envMap:reflections,envMapIntensity:.92});
-    let mantle=surface(0x73512d,.33,.53,swatch(1)),dark=surface(0x494033,.38,.55),gold=surface(0xc6964a,.59,.37),horn=surface(0xe4b868,.46,.37),eye=new T.MeshStandardMaterial({color:0xffb62b,emissive:0xff8700,emissiveIntensity:1.5}),pupil=surface(0x211e18,.06,.36);
-    oval(body,mantle,0,.04,.13,.94,.79,2.09);oval(neck,mantle,0,.11,-.13,.58,.75,.74);oval(head,mantle,0,.02,-.06,.49,.55,.63);beak(head,horn,true).position.z=-.37;beak(jaw,dark,false);
-    for(let a of [-1,1]){oval(head,eye,a*.418,.137,-.31,.09,.088,.105);oval(head,pupil,a*.482,.137,-.324,.045,.068,.042);stick(head,gold,V(a*.31,.29,-.49),V(a*.49,.25,-.15),.067,.096);
-      for(let j=0;j<5;j++)feather(head,a*.055*j,.28+j*.006,.06,V(a*(.18+j*.10),.58+j*.10,.51+j*.14),.105,0xb58a4d,3*j);
-      let shoulder=node(body,a*.64,.16,-.41),wrist=node(shoulder,a*2.18,.09,-.29);b.spars.push({a,shoulder,wrist});
-      let arm=oval(shoulder,mantle,a*1.03,.055,.10,1.47,.25,.69);arm.rotation.y=a*.12;
-      for(let row=0;row<2;row++)for(let j=0;j<8;j++){let u=j/7;feather(shoulder,a*(.12+1.83*u),.105+row*.08,-.39*u-row*.19,V(a*(.49+.28*u),-.20+u*.19,2.53-u*.24-row*.65),.28-row*.04,[0x7e5831,0x976b38,0xae8045][(j+row)%3],j)}
-      for(let j=0;j<11;j++){let u=j/10,fan=node(wrist,a*(.08+1.15*u),.07+u*.12,-.08-.36*u);b.fans.push({fan,u,a});feather(fan,0,0,0,V(a*(1.02+3.5*u),.28+u*.34,2.61-1.74*u),.36-.105*u,[0x695438,0xa27c43,0x856439][j%3],j);feather(fan,0,.063,-.075,V(a*(.76+1.44*u),.16+u*.25,1.5-.84*u),.23,[0xc1944f,0xa77c41][j%2],j+3)}
-    }
-    for(let row=0;row<4;row++)for(let j=-4;j<=4;j++){let a=j*.35+(row%2)*.07,r=.72+.13*Math.sin(row*.95),sx=Math.sin(a)*r,sy=.49-row*.20,sz=-1.29*Math.cos(a)-.16;feather(body,sx,sy,sz,V(Math.sin(a)*.23,-.56+Math.abs(j)*.012,.17+.18*Math.cos(a)),.176,[0xae8044,0x946633,0xb28d53,0x795830][(row+Math.abs(j))%4],j+row)}
-    for(let a of [-1,1])for(let j=0;j<5;j++){let v=j/4;feather(neck,a*(.13+.31*v),.4-v*.19,-.44+v*.18,V(a*(.07+.25*v),-.44,.29+v*.14),.127,j%2?0xb78b4e:0x936c3e,j)}
-    for(let j=-5;j<=5;j++){let stem=node(tail,j*.09,0,0);b.streamers.push({stem,j});feather(stem,0,0,0,V(j*.45,-.46+Math.abs(j)*.038,4.13-Math.abs(j)*.30),.34,Math.abs(j)%2?0x98703d:0xb48c4f,j)}
-    for(let j=-1;j<=1;j++){let leg=node(body,j*.49,-.45,j===0?.74:-.11),ankle=node(leg,0,-.69,.28);stick(leg,gold,V(),ankle.position,.105,.078);stick(ankle,gold,V(),V(0,-.41,-.1),.084,.058);for(let d=-1;d<=1;d++){let p=V(d*.18,-.45,-.40);stick(ankle,horn,V(0,-.4,-.09),p,.056,.026);stick(ankle,dark,p,V(d*.21,-.56,-.44),.031,.002)}b.feet.push({leg,ankle,j});batch(ankle)}
-    for(let n of [body,neck,head,jaw,...b.spars.map(s=>s.shoulder),...b.fans.map(s=>s.fan)])batch(n);
-    return root}
+  let bestiary;
+  function birdFigure(){bestiary=createSolarBestiary({node,surface,batch,reflections});b=bestiary.boss();return b.root}
   function flight(dt){if(!b||!enemy.visible||freeze>0)return;
     let {body,neck,head,jaw,tail}=b,rage=bhp<bmax*.5,warning=tele>0,progress=warning?clamp(1-tele/(rage?.88:1.46)):0;
     let dive=attackType===0&&warning?ease(progress/.74):0,tucked=stagger>0?1:dive;
@@ -137,5 +116,5 @@ const motion=(()=>{
     for(let {leg,ankle,j} of b.feet){leg.rotation.x=-.48+.1*Math.sin(p+j)+dive*.93;ankle.rotation.x=.51-.06*Math.sin(p-.64+j)-dive*.75}}
   function divePoint(pos,mark,remain,rage){let t=clamp(1-remain/(rage?.88:1.46));if(!b.diveStart||remain>b.lastTele+.07)b.diveStart=pos.clone();b.lastTele=remain;let v=b.diveStart.clone().lerp(mark.clone().add(V(0,2,0)),ease((t-.13)/.87));v.y+=Math.sin(Math.PI*t)*2.65;return v}
   function rimLight(){let key=new T.DirectionalLight(0xdce4e1,1.30);key.position.set(30,42,34);S.add(key);let sun=S.userData.sun;sun.shadow.normalBias=.022;sun.shadow.radius=2.5}
-  return {heroFigure,birdFigure,animateHero,flight,shot,wounded,resetHero,divePoint,rimLight,arrowModel:()=>arrow(null,mats()),get hero(){return h},get bird(){return b}};
+  return {heroFigure,birdFigure,dressBoss:k=>bestiary.dress(k),minion:i=>bestiary.minion(i),poseMinion:(m,t)=>bestiary.poseMinion(m,t),animateHero,flight,shot,wounded,resetHero,divePoint,rimLight,arrowModel:()=>arrow(null,mats()),get hero(){return h},get bird(){return b}};
 })();
