@@ -1,0 +1,48 @@
+const regions=['焦土平原','南极冰原','北冰洋冰海','冬日雪村','永夜小镇'],desc=['熔岩在龟裂的河床间流淌。焦黑的枯木仍守望着扶桑神龛，等待第一缕绿意。','企鹅蜷缩在消融的冰山脚下。击落盘踞于极地的金乌，使冰川重新冻结。','浮冰随寒潮漂流。远方的极光被日火吞没，白熊正等待长夜归来。','雪落无声的山中村落，融水正漫过屋檐。让冬日的雪再一次降临。','千家灯火不见繁星。穿过层叠的飞檐，在永夜尽头迎战帝俊之子。'];
+function seed(s){return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}}
+function artist(c){const g=c.getContext('2d');return g}
+function path(g,d,f,s,w=1){let p=new Path2D(d);if(f){g.fillStyle=f;g.fill(p)}if(s){g.strokeStyle=s;g.lineWidth=w;g.stroke(p)}}
+function line(g,x,y,X,Y,col,w=1){g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.moveTo(x,y);g.lineTo(X,Y);g.stroke()}
+function circ(g,x,y,r,col,stroke,w=1){g.beginPath();g.arc(x,y,r,0,Math.PI*2);if(col){g.fillStyle=col;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=w;g.stroke()}}
+function mountain(g,W,H,base,amp,co,ink,s,rough=1){let r=seed(s),p=r()*6,pts=[];for(let x=-4;x<W+5;x+=3){let t=x/W,y=base+amp*(.47*Math.sin(t*12+p)+.32*Math.cos(25*t+2*p)+.20*Math.sin(55*t+3*p)+.08*Math.sin(107*t)+.07*r()*rough);pts.push([x,y])}g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.lineTo(W+5,H+40);g.lineTo(-5,H+40);g.closePath();g.fillStyle=co;g.fill();g.save();g.clip();for(let [x,y] of pts){let z=r()*amp*1.7+10;g.beginPath();g.moveTo(x,y);g.bezierCurveTo(x+z*.11,y+z*.2,x-z*.41,y+z*.64,x-z*.5+r()*20,y+z);g.strokeStyle=ink;g.lineWidth=.55+r()*.9;g.stroke();if(r()<.21){for(let k=0;k<6;k++)line(g,x-k,y+k*2,x-k-12,y+18+k*2,ink,.6)}}g.restore();return pts}
+function pine(g,x,y,h,c){g.fillStyle=c;g.beginPath();g.moveTo(x,y-h);for(let i=1;i<=8;i++){g.lineTo(x+h*.021*i,y-h+h*i/9);g.lineTo(x+h*.008*i,y-h+h*i/9-1)}g.lineTo(x+1,y);g.lineTo(x-1,y);for(let i=8;i>0;i--){g.lineTo(x-h*.023*i,y-h+h*i/9);g.lineTo(x-h*.009*i,y-h+h*(i-1)/9)}g.fill()}
+function bird(g,x,y,sc){g.save();g.translate(x,y);g.scale(sc,sc);const r=seed(86),ink='#332f25',pals=['#534936','#60503a','#6b573b','#776143','#8c714d','#a38658','#574b38'];
+function feather(bx,by,tx,ty,w,col,bend=.08){let dx=tx-bx,dy=ty-by,L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L;function pt(t,o){let v=L*bend*Math.sin(t*Math.PI)+o;return [bx+t*dx+nx*v,by+t*dy+ny*v]}let d='M'+pt(0,0)+' Q'+pt(.38,-w)+' '+pt(.72,-w*.49)+' Q'+pt(.9,-w*.22)+' '+pt(1,0)+' Q'+pt(.78,w*.71)+' '+pt(.48,w*.81)+' Q'+pt(.12,w*.56)+' '+pt(0,0);path(g,d,col,ink,1.35);path(g,'M'+pt(.05,0)+' Q'+pt(.5,L*bend*.98)+' '+pt(.97,0),null,'#d0ae748f',.85);for(let t=.12;t<.92;t+=.042+r()*.018){let z=Math.sin(t*Math.PI)*w;for(let a of [-1,1]){let u=pt(t,0),v=pt(t+.067,a*z*.64);line(g,...u,...v,a===1?'#352e257d':'#dcc08a85',.67)}}}
+// tail streamers
+for(let i=0;i<13;i++){let f=i/12;feather(12+i*1.5,12,51+f*147,169+Math.sin(f*3)*33-f*70,15,pals[i%7],.09)}
+// alula and primary flight feathers
+for(let side of [-1,1]){let right=side===1;for(let i=0;i<15;i++){let t=i/14,ex=right?117+169*t:-(92+140*t),ey=right?22-188*t-24*Math.sin(t*3):-21-169*t-35*Math.sin(t*3);feather(side*(4+83*t),-6-48*t,ex,ey,18+4*t,pals[(i+1)%5],side*.105)}
+for(let row=0;row<3;row++){let n=15-row*2;for(let i=n-1;i>=0;i--){let t=i/(n-1),base=side*(8+133*t),by=-14-64*t-(right?8:24)*t;feather(base,by,base+side*(47+24*t-row*10),by+40-73*t-row*9,13-row*1.3,pals[(i+row+2)%7],side*.075)}}}
+// three scaled talons
+for(let i=0;i<3;i++){g.save();g.translate(-13+i*11,22+i*2);g.rotate((i-1)*-.28);path(g,'M0 0 Q-4 15 0 28 L-9 41 M0 28 Q-1 37 4 40 M0 28 Q8 31 9 38',null,ink,3.4);for(let j=3;j<27;j+=4)line(g,-2,j,1.6,j+1,'#ba9562',.8);g.restore()}
+// body and hood
+g.save();g.rotate(-.35);path(g,'M-44 -7 Q-39 -38 -12 -33 Q14 -36 39 -4 L49 30 Q24 16 10 24 Q-11 32 -29 15Z','#504735',ink,2);for(let row=0;row<5;row++)for(let i=0;i<8;i++){let xx=-32+i*7,yy=-20+row*7;feather(xx,yy,xx+15+r()*9,yy+7+r()*6,4+r()*3,pals[(i+row)%7],.08)}g.restore();
+path(g,'M-18 -16 Q-34 -43 -54 -34 L-48 -31 Q-65 -36 -74 -22 L-84 -14 L-68 -13 Q-67 5 -51 10 Q-35 15 -25 6 L-35 0 L-21 0 L-32 -8Z','#574a34',ink,1.7);path(g,'M-69 -21 Q-94 -18 -96 -3 Q-80 -12 -65 -9 L-73 -14Z','#bc9963',ink,1.7);circ(g,-64,-21,3,'#f3c274');circ(g,-63,-21,1.4,ink);for(let i=0;i<30;i++){let xx=-57+r()*23,yy=-22+r()*24;line(g,xx,yy,xx+9,yy+4,'#b79b6b99',.7)}g.restore()}
+function sunart(g,x,y,R){const r=seed(200);let glow=g.createRadialGradient(x,y,R*.5,x,y,R*1.85);glow.addColorStop(0,'#e4b36b6e');glow.addColorStop(.59,'#e0b58044');glow.addColorStop(1,'#d1bd8400');circ(g,x,y,R*1.85,glow);for(let i=0;i<5;i++)circ(g,x,y,R+4+i*4,null,'#5d543745',.8);let gr=g.createLinearGradient(0,y-R,0,y+R);gr.addColorStop(0,'#e4ba7d');gr.addColorStop(.54,'#ecca8f');gr.addColorStop(1,'#b7905f');circ(g,x,y,R,gr,'#d3aa72',1);g.save();g.beginPath();g.arc(x,y,R,0,7);g.clip();for(let i=0;i<9500;i++){let xx=x+(r()*2-1)*R,yy=y+(r()*2-1)*R;line(g,xx,yy,xx+r()*4+.3,yy+.5,'#624e333f',.6+r()*.5)}g.restore()}
+function landscape(c,variant=-1){const g=artist(c),big=variant<0,W=big?1600:480,H=big?900:190;c.width=W;c.height=H;let r=seed(300+variant),pal=[['#70695a','#d2ac72','#9b8062','#625749','#332f27'],['#5e7276','#cbd5cb','#9aaeb0','#6f878b','#445958'],['#50696b','#b1c6b9','#869d9b','#5e7778','#3d595e'],['#737c77','#cccdb8','#99aaa4','#758680','#4a5a55'],['#364340','#8a9486','#687970','#4e6057','#33463e']][Math.max(0,variant)];
+let grad=g.createLinearGradient(0,0,0,H);grad.addColorStop(0,big?'#535a53':pal[0]);grad.addColorStop(.47,big?'#c7b893':pal[1]);grad.addColorStop(.72,big?'#c9b994':pal[1]);grad.addColorStop(1,'#4b5149');g.fillStyle=grad;g.fillRect(0,0,W,H);
+if(big){sunart(g,1116,290,136);for(let i=0;i<9;i++){let sx=210+i*132+r()*46,sy=198+r()*168;circ(g,sx,sy,4+r()*10,'#e0bc8292', '#edce924d',2)}}
+// engraved cloud ribbons
+for(let i=0;i<(big?155:38);i++){let x=r()*W,y=r()*H*.64,w=22+r()*(big?178:65);for(let j=0;j<2+r()*4;j++){g.beginPath();g.moveTo(x+j*4,y+j*2.6);g.bezierCurveTo(x+w*.35,y+j*2-3,x+w*.66,y+j*2+4,x+w-j*5,y+j*2);g.strokeStyle=big?'#5e614e32':'#dadbc337';g.lineWidth=.85;g.stroke()}}
+let bases=big?[.48,.54,.61,.68,.78,.89]:[.53,.66,.81,.96],amps=big?[.075,.09,.12,.1,.105,.15]:[.21,.19,.17,.12],cols=big?['#a8aa96','#979d88','#858c79','#747e6c','#5e695a','#3e4a41']:[pal[2],pal[2],pal[3],pal[4]];bases.forEach((b,i)=>{let pts=mountain(g,W,H,H*b,H*amps[i],cols[i],big?['#757d6d70','#64746070','#58645485','#4c5b4a88','#3b473b9c','#242e2599'][i]:'#273f393e',12+i*6+variant*2);if(i>=2)for(let [x,y] of pts)if(r()<.48)pine(g,x,y+1,(big?5:2)+r()*(big?i*2:4),cols[i])});
+if(big){bird(g,1117,275,1.07);for(let i=0;i<9;i++){let x=1230+r()*260,y=310+r()*95;path(g,'M'+x+' '+y+'q5 -2 9 2q4 -6 10 -6q-5 3 -9 10q-5 -5 -10 -6','#4a4e40')}
+// foreground wind-cut crag
+path(g,'M750 900L869 750 924 724 945 689 1004 676 1027 650 1105 637 1170 599 1202 600 1244 578 1305 581 1348 555 1420 544 1472 511 1536 504 1600 472 1600 900Z','#333d34','#777b64',2);
+for(let i=0;i<1400;i++){let x=894+r()*760,y=772-(x-900)*.41+r()*150;line(g,x,y,x-9-r()*20,y+3+r()*13,'#93977a3f',.8)}
+sentinel(g,1333,561,.71);for(let i=0;i<65;i++){let xx=740+r()*840,yy=420+r()*320;line(g,xx,yy,xx+2+r()*3,yy-1-r()*4,'#c68b497a',.7+r())}
+}else if(variant===3||variant===4){for(let i=0;i<11;i++){let x=110+i*36+r()*23,y=126+r()*48;g.fillStyle='#4d5349';g.fillRect(x,y,37,22);path(g,'M'+(x-7)+' '+y+'l12 -6 13 -13 11 11 16 6 -6 4z',variant===3?'#c0c3b0':'#303c36','#687367',1);for(let k=0;k<3;k++){g.fillStyle='#deae64';g.fillRect(x+5+k*10,y+7,4,6)}}}
+if(!big&&variant===0){for(let i=0;i<6;i++){let x=220+r()*250,y=147+r()*40;line(g,x,y,x+3,y-37,'#494337',3);line(g,x+2,y-18,x-12,y-32,'#494337',2);line(g,x+3,y-25,x+15,y-37,'#494337',2)}}
+let img=g.getImageData(0,0,W,H),d=img.data;for(let j=0;j<d.length;j+=4){let n=(r()-.5)*(big?16:18);d[j]+=n;d[j+1]+=n;d[j+2]+=n}g.putImageData(img,0,0);return c}
+landscape(document.querySelector('#art'));regions.forEach((name,i)=>{let b=document.createElement('button');b.className='landcard';b.innerHTML='<small>境域　0'+(i+1)+'</small><strong>'+name+'</strong><em>↗</em>';b.prepend(landscape(document.createElement('canvas'),i));b.onclick=()=>regionInfo(i);document.querySelector('#cards').append(b)});
+function sentinel(g,x,y,s){g.save();g.translate(x,y);g.scale(s,s);let ink='#363b2f',ed='#b2a080',mid='#585947';function p(d,f=ink,o='#31382e',w=1){path(g,d,f,o,w)}
+// windblown cloak and layered lamellar armor
+p('M-6 -103 Q15 -107 25 -86 Q42 -61 68 -49 L52 -51 75 -32 48 -40 57 -27Q29 -35 7 -66L0 -61Z','#414739');
+p('M-14 -64L1 -60 6 -32 -8 -5 -6 -1 -30 0 -28 -4 -20 -7 -11 -40Z');p('M2 -62L14 -61 19 -38 35 -9 46 -5 48 -2 29 -2 9 -27 -5 -41Z');
+p('M-12 -106 Q0 -112 11 -96L18 -62 28 -43 8 -44 -1 -59 -4 -40 -26 -39 -21 -57Z',mid);p('M-18 -72L14 -75 17 -67 -20 -63Z','#9c865f');
+p('M-13 -108Q-25 -112 -32 -121L-51 -130 -49 -135 -28 -131 -11 -122 1 -112Z',mid);p('M4 -105Q16 -105 22 -114L-2 -121 -9 -127 -5 -131 6 -126 32 -120Q44 -115 33 -108L13 -94Z',mid);
+p('M-17 -110L-19 -119Q-26 -119 -26 -126L-31 -129 -26 -131 -26 -140Q-22 -151 -13 -149Q0 -151 4 -138L-1 -123 -4 -115Z',mid);
+p('M-27 -140Q-31 -150 -20 -154L-20 -158Q-19 -164 -12 -163Q-6 -162 -8 -155Q5 -150 4 -139L0 -128 7 -113 -7 -127 -6 -138Z');p('M-26 -142Q-13 -148 0 -144',null,ed,1.6);
+p('M-16 -104Q-4 -111 3 -103L8 -94 -11 -91Z','#716c52');for(let i=0;i<6;i++){p('M'+(-15+i)+' '+(-91+i*4)+'l19 -4',null,'#a89b78',.9);p('M'+(-15+i*5)+' -62l-4 16',null,'#ad9c73',1)}
+for(let n=0;n<4;n++){let yy=-58+n*3;p('M-18 '+yy+'l14 -1',null,'#83856a',.8)}
+// recurved bow, drawn string and long nocked arrow
+p('M-66 -173Q-60 -169 -63 -162Q-74 -153 -58 -136Q-49 -121 -54 -106Q-56 -95 -49 -87L-46 -83',null,'#c1a578',2.7);p('M-66 -173L-5 -128 -46 -83',null,'#aba889',.75);p('M-5 -128L-90 -148',null,'#d6bc8c',1.5);p('M-96 -149L-85 -150 -88 -144Z','#d6bc8c');for(let i=0;i<3;i++)p('M'+(10+i*3)+' -88l28 -34',null,ed,1.2);g.restore()}
