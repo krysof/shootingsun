@@ -6,9 +6,8 @@ const motion=(()=>{
   function swatch(kind){let c=document.createElement('canvas');c.width=c.height=128;let g=c.getContext('2d'),im=g.createImageData(128,128),rand=seed(89+kind);
     for(let y=0;y<128;y++)for(let x=0;x<128;x++){let i=(x+y*128)*4,w=kind===0?(y%4===0?-29:0)+(x%3===0?-16:0):kind===1?10*Math.sin(.42*x+Math.sin(y*.18)*4):4*Math.sin(.63*y);let v=221+w+rand()*25;im.data.set([v,v-3,v-6,255],i)}
     g.putImageData(im,0,0);if(kind===1){for(let i=0;i<83;i++){let x=rand()*128,y=rand()*128;line(g,x,y,x+rand()*5,y+rand()*18,'#7a766c55',.55)}}let t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,2);t.colorSpace=T.SRGBColorSpace;return t}
-  function mats(){if(palette)return palette;let weave=swatch(0),hide=swatch(1),metal=swatch(2);
-    return palette={silk:surface(0x763927,.03,.86,weave),hem:surface(0xba814b,.22,.68,weave),cloth:surface(0x3e4944,.04,.92,weave),leather:surface(0x513626,.13,.73,hide),trim:surface(0x885c37,.18,.62,hide),bronze:surface(0xa77d44,.72,.45,metal),plate:surface(0x58605a,.61,.48,metal),skin:surface(0xb98462,.02,.76),hair:surface(0x292823,.06,.7,hide),wood:surface(0x925a31,.12,.54,hide),cord:surface(0xddd0a4,.04,.77),dark:surface(0x342d27,.13,.72),flight:surface(0xbfa37c,.16,.72)}
-  }
+  let workshop;
+  function mats(){if(!palette){workshop=houyiWorkshop({node,oval,form,band,pipe,batch,surface});palette=workshop.materials()}return palette}
   function oval(p,m,x,y,z,a,b,c){let o=mesh(new T.SphereGeometry(1,16,12),m,p,x,y,z);o.scale.set(a,b,c);return o}
   function form(p,m,rows,x=0,y=0,z=0,depth=.8,n=24){let geo=new T.LatheGeometry(rows.map(([r,h])=>new T.Vector2(r,h)),n);geo.scale(1,1,depth);return mesh(geo,m,p,x,y,z)}
   function band(p,m,y,r,zScale=.76,w=.042){return form(p,m,[[r-.01,-w],[r,0],[r,w*.65],[r-.012,w]],0,y,0,zScale)}
@@ -17,43 +16,23 @@ const motion=(()=>{
   function batch(p){let map=new Map();for(let o of [...p.children]){if(!o.isMesh||o.isInstancedMesh)continue;let a=map.get(o.material)||[];a.push(o);map.set(o.material,a)}
     for(let [m,list] of map){if(list.length<2)continue;let at={position:[],normal:[],uv:[]},cnt=0,idx=[];if(m.vertexColors)at.color=[];for(let o of list){o.updateMatrix();let geo=o.geometry.clone().applyMatrix4(o.matrix),src=geo.attributes,n=src.position.count;for(let key of Object.keys(at)){let v=src[key];if(v)at[key].push(...v.array);else for(let k=0;k<n*(key==='uv'?2:3);k++)at[key].push(0)}if(geo.index){for(let j of geo.index.array)idx.push(j+cnt)}else for(let j=0;j<n;j++)idx.push(j+cnt);cnt+=n;geo.dispose();p.remove(o);o.geometry.dispose()}
       let g=new T.BufferGeometry();for(let key of Object.keys(at))g.setAttribute(key,new T.Float32BufferAttribute(at[key],key==='uv'?2:3));g.setIndex(idx);mesh(g,m,p)}}
-  function arrow(p,M,len=1.14){let o=node(p);stick(o,M.wood,V(0,0,.02),V(0,0,-len+.07),.012,.009);stick(o,M.bronze,V(0,0,-len+.115),V(0,0,-len),.036,.001);for(let a=0;a<3;a++){let f=oval(o,M.flight,Math.cos(a*tau/3)*.019,Math.sin(a*tau/3)*.019,-.11,.016,.043,.115);f.rotation.z=a*tau/3}batch(o);return o}
+  function arrow(p,M,len=1.14){return workshop.arrow(p,M,len)}
   function limb(p,L1,L2,arm,sign,M){let top=node(p),mid=node(top,0,-L1,0),end=node(mid,0,-L2,0);
-    if(arm){form(top,M.cloth,[[.067,-L1],[.104,-L1*.72],[.115,-L1*.54],[.132,-.12],[.13,-.045],[.08,.03]],0,0,0,.96);
-      oval(top,M.plate,0,-.045,0,.158,.125,.156);for(let j=0;j<3;j++)band(top,j===0?M.bronze:M.plate,-.075-.048*j,.153-.009*j,.98,.014);
-      form(mid,M.skin,[[.052,-L2],[.07,-L2*.63],[.098,-.13],[.089,-.026],[.068,.026]],0,0,0,.95);
-      form(mid,M.leather,[[.066,-L2+.035],[.077,-.27],[.098,-.137],[.091,-.105]],0,0,0,1);
-      for(let j=0;j<3;j++)band(mid,j===1?M.bronze:M.trim,-.15-j*.072,.095-j*.008,1,.014);
-      oval(end,M.skin,0,-.019,-.02,.063,.091,.047);for(let j=0;j<4;j++)oval(end,M.skin,sign*(j-1.5)*.025,-.069,-.039,.017,.047,.018);oval(end,M.skin,-sign*.054,-.028,-.042,.025,.055,.026);
-    }else{form(top,M.cloth,[[.095,-L1],[.122,-L1*.86],[.153,-L1*.52],[.173,-.15],[.153,-.025],[.09,.03]],0,0,0,.93);
-      oval(mid,M.plate,0,-.043,-.07,.115,.127,.072);form(mid,M.leather,[[.07,-L2],[.083,-L2*.76],[.12,-.22],[.116,-.12],[.091,-.015]],0,0,0,.94);
-      for(let j=0;j<3;j++)band(mid,j===0?M.bronze:M.trim,-.14-j*.14,.122-.013*j,.94,.018);
-      oval(end,M.leather,0,-.024,-.052,.099,.092,.192);oval(end,M.dark,0,-.076,-.063,.104,.041,.202);oval(end,M.trim,0,-.023,-.174,.089,.052,.084)}
+    if(arm){workshop.sleeve(top,mid,end,M,sign,L1,L2);
+    }else{workshop.lowerLimb(top,mid,end,M,sign,L1,L2)}
     for(let n of [top,mid,end])batch(n);return {top,mid,end,L1,L2,sign,plant:null,swing:null,stance:false}
   }
   // Two-bone IK in the shoulder/hip parent's frame. The pole fixes elbow and knee bend direction.
   const down=()=>V(0,-1,0);
   function solve(l,start,goal,pole){let axis=goal.clone().sub(start),d=clamp(axis.length(),Math.abs(l.L1-l.L2)+.001,l.L1+l.L2-.0002);axis.normalize();let bend=pole.clone().addScaledVector(axis,-pole.dot(axis));if(bend.lengthSq()<.000001)bend.set(1,0,0);bend.normalize();let a=(l.L1*l.L1-l.L2*l.L2+d*d)/(2*d),joint=start.clone().addScaledVector(axis,a).addScaledVector(bend,Math.sqrt(Math.max(0,l.L1*l.L1-a*a)));
     l.top.position.copy(start);l.top.quaternion.setFromUnitVectors(down(),joint.clone().sub(start).normalize());let q=new T.Quaternion().setFromUnitVectors(down(),start.clone().addScaledVector(axis,d).sub(joint).normalize());l.mid.quaternion.copy(l.top.quaternion).invert().multiply(q);l.end.quaternion.copy(q).invert()}
-  function archeryBow(p,M){let grip=node(p),limbs=[],nocks=[];for(let a of [-1,1]){let root=node(grip,0,a*.078,0);pipe(root,M.wood,[V(),V(.01,a*.23,-.073),V(.016,a*.50,-.067),V(.02,a*.78,.067),V(0,a*.90,.11)],.03);
-      pipe(root,M.bronze,[V(.012,a*.47,-.071),V(.014,a*.63,-.019),V(.015,a*.73,.046)],.017);for(let j=0;j<3;j++)oval(root,M.trim,0,a*(.16+j*.045),-.05,.032,.018,.032);let tip=node(root,0,a*.90,.11);limbs.push(root);nocks.push(tip);batch(root)}
-    form(grip,M.leather,[[.028,-.115],[.041,-.064],[.035,.07],[.03,.11]],0,0,0,1);let geom=new T.BufferGeometry();geom.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(9),3).setUsage(T.DynamicDrawUsage));let string=new T.Line(geom,new T.LineBasicMaterial({color:0xf0e3c8}));string.frustumCulled=false;grip.add(string);return {grip,limbs,nocks,string}}
+  function archeryBow(p,M){let grip=node(p),limbs=[],nocks=[];for(let a of [-1,1]){let root=node(grip,0,a*.078,0);workshop.bowLimb(root,M,a);let tip=node(root,0,a*.90,.11);limbs.push(root);nocks.push(tip);batch(root)}
+    workshop.bowHandle(grip,M);let geom=new T.BufferGeometry();geom.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(9),3).setUsage(T.DynamicDrawUsage));let string=new T.Line(geom,new T.LineBasicMaterial({color:0xf0e3c8}));string.frustumCulled=false;grip.add(string);return {grip,limbs,nocks,string}}
   function makeReflections(){if(reflections)return;let c=document.createElement('canvas');c.width=256;c.height=128;let g=c.getContext('2d'),sk=g.createLinearGradient(0,0,0,128);sk.addColorStop(0,'#adc0c9');sk.addColorStop(.38,'#d8dcd2');sk.addColorStop(.5,'#dbcaab');sk.addColorStop(.61,'#8d7962');sk.addColorStop(1,'#625746');g.fillStyle=sk;g.fillRect(0,0,256,128);let patch=g.createRadialGradient(76,40,1,76,40,23);patch.addColorStop(0,'#fffadf');patch.addColorStop(1,'#fff1ce00');g.fillStyle=patch;g.fillRect(0,0,256,128);let tex=new T.CanvasTexture(c);tex.mapping=T.EquirectangularReflectionMapping;tex.colorSpace=T.SRGBColorSpace;let pm=new T.PMREMGenerator(R);reflections=pm.fromEquirectangular(tex).texture;tex.dispose();pm.dispose()}
   function heroFigure(){makeReflections();let M=mats(),root=node(),pivot=node(root,0,1.12,0),body=node(pivot,0,-1.12,0),pelvis=node(body,0,1.34,0),chest=node(pelvis),head=node(chest,0,.86,0);
     form(pelvis,M.cloth,[[.22,-.2],[.305,-.1],[.31,.015],[.27,.14]],0,0,0,.71);
-    form(chest,M.cloth,[[.265,.002],[.248,.19],[.27,.34],[.337,.58],[.332,.69],[.21,.756],[.11,.78]],0,0,0,.73);
-    // Overlapping lamellar courses and a diagonal baldric; brass rivets catch the moving rim light.
-    for(let row=0;row<5;row++)for(let i=0;i<12;i++){let a=i*tau/12+(row%2)*.12,r=.275+row*.012,x=r*Math.sin(a),z=r*.73*Math.cos(a);let outline=[[-.081,.048],[.08,.048],[.083,-.026],[.052,-.05],[-.044,-.056],[-.076,-.036]],verts=[0,-.005,.026],idx=[];outline.forEach(([xx,yy],j)=>{verts.push(xx,yy,-.004-.13*Math.abs(xx));idx.push(0,1+(j+1)%6,1+j)});let gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(verts,3));gg.setAttribute('uv',new T.Float32BufferAttribute([.5,.5,0,1,1,1,1,.2,.8,0,.2,0,0,.2],2));gg.setIndex(idx);gg.computeVertexNormals();M.plate.side=T.DoubleSide;let sc=mesh(gg,M.plate,chest,x,.224+row*.075,z);sc.rotation.y=a;oval(chest,M.bronze,x*1.055,.248+row*.075,z*1.06,.010,.008,.010)}
-    band(pelvis,M.leather,.077,.308,.79,.067);band(pelvis,M.bronze,.10,.314,.78,.014);
-    pipe(chest,M.trim,[V(-.24,.07,.168),V(-.06,.36,.232),V(.18,.64,.19),V(.226,.72,.01),V(.16,.65,-.166),V(-.21,.10,-.163)],.054);
-    form(head,M.skin,[[.1,-.152],[.112,-.064],[.093,.035]],0,0,0,.92);
-    form(head,M.skin,[[.073,-.027],[.124,.012],[.151,.083],[.161,.159],[.154,.226],[.131,.291],[.07,.33]],0,0,-.012,.87);
-    oval(head,M.skin,0,.128,-.157,.036,.06,.034);for(let a of [-1,1]){oval(head,M.skin,a*.156,.129,0,.03,.05,.025);oval(head,M.hair,a*.067,.168,-.133,.046,.009,.011);oval(head,M.dark,a*.064,.144,-.136,.021,.009,.011)}
-    oval(head,M.hair,0,.235,.015,.164,.119,.145);oval(head,M.hair,0,.125,.083,.15,.15,.09);oval(head,M.hair,0,.373,.067,.113,.116,.093);band(head,M.bronze,.316,.095,.94,.019);stick(head,M.bronze,V(-.155,.348,.09),V(.156,.38,.065),.013);
-    for(let j=0;j<6;j++)pipe(head,M.dark,[V((j-2.5)*.028,.234,.125),V((j-2.5)*.034,.117,.171),V((j-2.5)*.03,.019,.123)],.012);
-    let quiv=node(chest,.032,.43,.247);quiv.rotation.z=-.45;form(quiv,M.leather,[[.073,-.35],[.096,-.28],[.102,.26],[.107,.34]],0,0,0,1);for(let y of [-.29,.23,.33])band(quiv,M.bronze,y,.106,1,.014);
-    for(let i=0;i<6;i++){let x=Math.cos(i*2.4)*.068,z=Math.sin(i*2.4)*.069,y=.49+(i%3)*.026;stick(quiv,M.wood,V(x,.20,z),V(x*1.4,y+.08,z),.009);let f=oval(quiv,M.flight,x*1.4,y+.04,z,.026,.082,.013);f.rotation.y=i}
-    let panels=[];for(let a of [-1,1]){let tail=node(pelvis,a*.14,.018,.131);let geo=new T.PlaneGeometry(.29,.72,6,10);let pos=geo.attributes.position;for(let i=0;i<pos.count;i++){let u=geo.attributes.uv.getX(i),v=geo.attributes.uv.getY(i);pos.setXYZ(i,pos.getX(i)*(1+.32*(1-v)),pos.getY(i)-.36,pos.getZ(i)+.048*Math.cos(u*14)*(1.15-v)+.075*(1-v))}geo.computeVertexNormals();let cm=M.silk.clone();cm.side=T.DoubleSide;mesh(geo,cm,tail);panels.push(tail)}
+    workshop.torso(chest,pelvis,M);workshop.face(head,M);workshop.hair(head,M);let quiv=workshop.quiver(chest,M);
+    let panels=[];for(let a of [-1,1]){let tail=node(pelvis,a*.14,.018,.131);workshop.panel(tail,M,a);panels.push(tail)}
     let arms=[-1,1].map(a=>limb(chest,.465,.442,true,a,M)),legs=[-1,1].map(a=>limb(body,.67,.65,false,a,M));let bow=archeryBow(body,M),ready=arrow(body,M);ready.visible=false;
     for(let n of [pelvis,chest,head,quiv])batch(n);
     h={root,pivot,body,pelvis,chest,head,arms,legs,bow,ready,panels,phase:0,weight:0,lift:0,pull:0,injury:0,seq:null,prev:null,side:1,lastOrigin:V(),roll:0};return root
