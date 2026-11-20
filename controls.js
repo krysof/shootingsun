@@ -71,9 +71,6 @@ const mouseSight=(()=>{
     facing.copy(point).sub(pos());const bodyYaw=Math.atan2(-facing.x,-facing.z);
     const d=Math.atan2(Math.sin(bodyYaw-hero.rotation.y),Math.cos(bodyYaw-hero.rotation.y));
     hero.rotation.set(0,hero.rotation.y+d*(1-Math.exp(-dt*22)),0);
-    const cross=document.getElementById('cross');
-    cross.classList.toggle('sighted',!!hover);cross.classList.toggle('drawing',aim&&hold);
-    cross.classList.toggle('full-draw',aim&&hold&&charge>=1.15);
   }
   function grab(){if(!active()||document.pointerLockElement||!R?.domElement.requestPointerLock)return;
     try{R.domElement.requestPointerLock()?.catch?.(()=>{})}catch{/* hovering over the canvas still works */}}
