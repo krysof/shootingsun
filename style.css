@@ -3,3 +3,9 @@
 #bossplaque{position:absolute;right:12%;top:25%;writing-mode:vertical-rl;border-inline:1px solid #c5a47188;background:linear-gradient(180deg,transparent,#1a201cc9 22%,#1a201c99 75%,transparent);padding:22px 10px;font:28px 'STKaiti','KaiTi',serif;letter-spacing:5px;color:#ead4ab}.series span{writing-mode:horizontal-tb;width:21px;height:auto;font:8px/1.15 SimSun,serif;columns:auto;padding:3px 2px}.landcard{cursor:pointer}
 @media(max-height:600px) and (min-width:701px){body{min-height:0}header{height:48px}.hero{top:14%}.series{margin-top:9px;font-size:22px}.hero h1{font-size:54px}.hero p{font-size:12px;line-height:1.4;margin:8px 0}.actions button{height:35px}.landcard{height:52px}.catalogue{bottom:7%}.sectionline{font-size:13px}}
 .cinema #art{animation:panpanel 5.5s ease-out both}.cinema .shade{background:linear-gradient(90deg,#10171025,transparent 65%)}@keyframes panpanel{from{transform:scale(1.035) translateX(-.7%)}to{transform:scale(1) translateX(0)}}@media(prefers-reduced-motion:reduce){.cinema #art,#audio i{animation:none!important}}
+/* Keep the prologue caption and its folio together even when the line wraps. */
+.cinema #story[data-prologue] {display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:0 8% 8vh}
+#story[data-prologue] #storylabel,#story[data-prologue] #storytext{position:static}
+#story[data-prologue] #storylabel{margin-bottom:1.4vh}
+#story[data-prologue] #storytext{max-width:100%;font-size:clamp(19px,2.35vw,38px);line-height:1.4;text-wrap:pretty}
+@media(max-width:600px){#story[data-prologue] #storylabel{font-size:9px;letter-spacing:1.3px}}
