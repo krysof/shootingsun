@@ -60,22 +60,24 @@ function gate(x,base){const g=group();g.position.set(x,base,-1.24);for(let s of 
 gate(52.9,0);gate(112.6,0);function pennant(x,y,color){let g=group();g.position.set(x,y,-.31);cyl(g,bronze,0,2.03,0,.045,.065,4.06);egg(g,gold,0,4.13,0,.114,.114,.114);let v=new T.BufferGeometry();v.setAttribute('position',new T.Float32BufferAttribute([0,0,0,-1.08,-.26,0,-.79,-.55,0,0,0,0,-.79,-.55,0,0,-.69,0],3));v.computeVertexNormals();let m=mat(color).clone();m.side=T.DoubleSide;return mesh(g,v,m,0,1.35,0)}
 const checkpoint=pennant(53.5,0,0xce7045),flag=pennant(110,0,0xa82e24);
 const keys=new Set(),touchMap=new Map(),P={x:1,y:0,vx:0,vy:0,facing:1,on:true},shadow=egg(scene,0x6c5d56,0,.012,0,.37,.015,.20);
-let state='menu',camX=-1,clock=0,age=0,stock=3,points=0,big=false,saved=false,grace=0,buf=0,inv=0,hurtT=0,messageT=0,winT=0,stepNo=0,beat=0,ac=null,audio=true;
+let state='menu',camX=-1,clock=0,age=0,stock=3,points=0,big=false,saved=false,grace=0,buf=0,inv=0,hurtT=0,messageT=0,winT=0,ac=null,audio=true;
 function beep(f,d,type='sine',volume=.06,end=f,delay=0){if(!ac||!audio||ac.state!=='running')return;let o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(end,t+d);g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(volume,t+.009);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d+.02);o.onended=()=>{o.disconnect();g.disconnect()}}
 function soundOn(){try{ac??=new(window.AudioContext||window.webkitAudioContext)();ac.resume().catch(()=>{})}catch{}}
-function melody(dt){beat-=dt;if(beat>0)return;beat=.32;let n=stepNo++%32,p=[0,7,12,14,7,4,9,7,2,9,14,16,14,9,7,2,0,4,7,12,16,14,9,7,4,2,7,9,4,2,0,7];if(n%5!==4)beep(196*2**(p[n]/12),.34,'triangle',.031);if(n%4===0)beep(n<16?98:82.4,.52,'sine',.055);if(n%2===0)beep(n%4?105:72,.10,'sine',.055,38)}
+const bgm=$('#bgm');bgm.volume=.42;
+function syncMusic(){if(state==='play'&&audio&&!document.hidden){bgm.play().catch(()=>{})}else bgm.pause()}
+
 function hud(){$('#score').textContent='◎ '+String(points).padStart(2,'0');$('#lives').textContent='马里奥 × '+stock;$('#area').textContent=saved?'山门古道':'赤霞山道'}
 function msg(t,life=1.7){$('#toast').textContent=t;messageT=life}
-function mode(s){state=s;const playing=s==='play'||s==='dying'||s==='win';document.body.classList.toggle('playing',playing);$('#panel').hidden=playing;$('#hud').hidden=s==='menu';$('#pause').hidden=!['play','pause'].includes(s);$('#pause').textContent=s==='pause'?'继续 ▷':'暂停 Ⅱ';if(!playing)keys.clear();
+function mode(s){state=s;syncMusic();const playing=s==='play'||s==='dying'||s==='win';document.body.classList.toggle('playing',playing);$('#panel').hidden=playing;$('#hud').hidden=s==='menu';$('#pause').hidden=!['play','pause'].includes(s);$('#pause').textContent=s==='pause'?'继续 ▷':'暂停 Ⅱ';if(!playing)keys.clear();
  const copy={pause:['旅途小憩','山道暂停','跳跃位置已保留。','继续冒险'],over:['卷末 · 再起','再闯山道','这一程暂告一段落。准备好就再出发。','从头再来'],end:['第一卷 · 通关','山门旗扬','你收集了 '+points+' 枚金币，穿过了赤霞山道。','再玩一次']};
  if(copy[s]){let [k,t,m,b]=copy[s];$('#kicker').textContent=k;$('#title').textContent=t;$('#summary').textContent=m;$('#action').innerHTML=b+' <strong>→</strong>'}}
 function resetPlayer(){Object.assign(P,{x:saved?54.5:1,y:.02,vx:0,vy:0,facing:1,on:true});big=false;inv=.8;grace=.1;buf=0;camX=P.x+2.1;hero.root.visible=true}
-function start(){points=0;stock=3;saved=false;age=stepNo=beat=0;ferryAt(0,false);checkpoint.position.y=flag.position.y=1.35;
+function start(){points=0;stock=3;saved=false;age=0;bgm.currentTime=0;ferryAt(0,false);checkpoint.position.y=flag.position.y=1.35;
  for(let c of coins){c.used=false;c.g.visible=true}for(let b of blocks){b.used=b.broken=false;b.g.visible=true;b.anim=0;b.g.position.y=b.y;b.g.children.forEach(c=>c.visible=true);if(b.type!=='brick')b.g.children[0].material=mat(0xb97b36)}
  for(let f of foes){f.x=f.start;f.dead=0;f.v=-1.18;f.g.visible=true;f.g.scale.set(1,1,1)}
  for(let d of drops)scene.remove(d.g);drops.length=0;for(let s of sparks)scene.remove(s.g);sparks.length=0;resetPlayer();hud();mode('play');msg('第一卷　·　赤霞山道')}
 function pause(){if(state==='play'){mode('pause');buf=0}else if(state==='pause')mode('play')}
-$('#action').onclick=()=>{soundOn();if(state==='pause')pause();else start()};$('#pause').onclick=pause;$('#music').onclick=()=>{audio=!audio;if(audio)soundOn();$('#music').textContent='声音 · '+(audio?'开':'关')};
+$('#action').onclick=()=>{soundOn();if(state==='pause')pause();else start()};$('#pause').onclick=pause;$('#music').onclick=()=>{audio=!audio;if(audio)soundOn();syncMusic();$('#music').textContent='声音 · '+(audio?'开':'关')};
 function press(k){if(state==='play'&&!keys.has(k)&&['Space','ArrowUp','KeyW'].includes(k))buf=.14;keys.add(k)}
 function release(k){keys.delete(k);if(['Space','ArrowUp','KeyW'].includes(k)&&P.vy>4.8)P.vy=4.8}
 window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)&&state==='play')e.preventDefault();if(!e.repeat&&['Escape','KeyP'].includes(e.code)){pause();return}if(state==='play')press(e.code)});window.addEventListener('keyup',e=>release(e.code));
@@ -95,7 +97,7 @@ function step(dt){clock+=dt;if(['pause','menu','end','over'].includes(state))ret
  if(messageT>0&&(messageT-=dt)<=0)$('#toast').textContent='';
  if(state==='win'){flag.position.y=Math.min(3.99,flag.position.y+dt*2.7);if((winT-=dt)<=0)mode('end');return}
  if(state==='dying'){hurtT-=dt;P.y+=P.vy*dt;P.vy-=24*dt;if(hurtT<=0){if(stock<=0){hero.root.visible=false;mode('over')}else{resetPlayer();mode('play');msg(saved?'从山门驿旗再出发':'再试一次')}}return}
- age+=dt;ferryAt(age,true);melody(dt);inv=Math.max(0,inv-dt);grace=P.on?.105:Math.max(0,grace-dt);buf=Math.max(0,buf-dt);
+ age+=dt;ferryAt(age,true);inv=Math.max(0,inv-dt);grace=P.on?.105:Math.max(0,grace-dt);buf=Math.max(0,buf-dt);
  let dir=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')),max=keys.has('ShiftLeft')||keys.has('ShiftRight')?8.6:6;
  let target=dir*max;P.vx+=Math.sign(target-P.vx)*Math.min(Math.abs(target-P.vx),(P.on?47:29)*dt);if(dir)P.facing=dir;
  if(buf>0&&grace>0){P.vy=11.15;P.on=false;grace=buf=0;beep(280,.17,'triangle',.065,620)}
