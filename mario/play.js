@@ -55,12 +55,39 @@ for(let [x,y,types] of [[5.5,2.85,['brick','coin','brick','power']],[23,3,['coin
 function coin(x,y){let g=group();g.position.set(x,y,.1);let c=cyl(g,0xe8a448,0,0,0,.19,.19,.075,16,true);c.rotation.x=Math.PI/2;box(g,0xffda83,0,0,.046,.049,.236,.02);coins.push({g,x,y,used:false})}
 for(let [a,y,n] of [[2.7,1.45,3],[12,2.7,1],[17,1.65,5],[26,1.35,3],[34.5,1.9,5],[44,1.9,3],[48,2.05,5],[57,1.48,3],[67.1,1.75,5],[78.8,1.95,5],[90,1.32,3],[97.3,1.75,5],[105,1.35,4]])for(let j=0;j<n;j++)coin(a+j*.94,y+(n===5?Math.sin(j*Math.PI/4)*1.12:0));
 function goomba(x,y,a,b){let g=group();egg(g,0xc28d62,0,.38,0,.32,.25,.24);egg(g,0x864932,0,.65,0,.46,.32,.30);for(let s of [-1,1]){egg(g,bootC,s*.23,.13,.04,.23,.13,.21);egg(g,0xffe7c5,s*.14,.67,.266,.091,.101,.036);egg(g,0x362b2b,s*.129,.67,.302,.033,.057,.017);let brow=box(g,0x463029,s*.145,.757,.286,.202,.049,.037);brow.rotation.z=s*.31}foes.push({g,x,y,a,b,v:-1.18,start:x,dead:0});g.position.set(x,y,0)}
-for(let args of [[15,0,13.4,17.6],[25,0,21.3,28.8],[39,.48,37.9,43],[55,0,52,59],[65,0,62.3,67],[76,.38,74.5,79.6],[90,0,84.1,92.5],[104,0,101.4,106.3]])goomba(...args);
+for(let args of [[15,0,13.4,17.6],[25,0,21.3,28.8],[39,.48,37.9,43],[55,0,52,59],[65,0,62.3,67],[76,.38,74.5,79.6],[90,0,84.1,92.5],[104,0,101.4,106.3]])goomba(...args);goomba(9.7,0,8.9,10.8);
 function gate(x,base){const g=group();g.position.set(x,base,-1.24);for(let s of [-1,1]){box(g,0x674537,s*1.32,1.45,0,.19,2.9,.22);box(g,0x9a826b,s*1.32,.21,0,.46,.42,.48)}box(g,0x924930,0,2.79,0,3.38,.24,.32);for(let i=-2;i<=2;i++)box(g,0x45494c,i*.65,3.02+.065*i*i,0,.78,.15,.57).rotation.z=i*.10}
 gate(52.9,0);gate(112.6,0);function pennant(x,y,color){let g=group();g.position.set(x,y,-.31);cyl(g,bronze,0,2.03,0,.045,.065,4.06);egg(g,gold,0,4.13,0,.114,.114,.114);let v=new T.BufferGeometry();v.setAttribute('position',new T.Float32BufferAttribute([0,0,0,-1.08,-.26,0,-.79,-.55,0,0,0,0,-.79,-.55,0,0,-.69,0],3));v.computeVertexNormals();let m=mat(color).clone();m.side=T.DoubleSide;return mesh(g,v,m,0,1.35,0)}
 const checkpoint=pennant(53.5,0,0xce7045),flag=pennant(110,0,0xa82e24);
 const keys=new Set(),touchMap=new Map(),P={x:1,y:0,vx:0,vy:0,facing:1,on:true},shadow=egg(scene,0x6c5d56,0,.012,0,.37,.015,.20);
 let state='menu',camX=-1,clock=0,age=0,stock=3,points=0,big=false,saved=false,grace=0,buf=0,inv=0,hurtT=0,messageT=0,winT=0,ac=null,audio=true;
+/* Arcade-only fire-flower blaster. The tracer pool follows the platform game's 2-D collision plane. */
+function flowerBlaster(parent){
+ const g=group(parent);egg(g,0x428173,-.04,0,0,.25,.144,.13);box(g,0x275850,-.13,-.115,0,.12,.16,.1);
+ const tip=cyl(g,0xbe7249,.25,.028,0,.095,.10,.35,12,true);tip.rotation.z=-Math.PI/2;
+ for(let j=0;j<6;j++){const a=j*Math.PI/3;egg(g,0xd55531,.425,.028+Math.cos(a)*.099,Math.sin(a)*.099,.063,.071,.071)}
+ egg(g,0xffc76f,.445,.028,0,.045,.067,.068);return g
+}
+const held=flowerBlaster(hero.root),flash=egg(held,0xffeab4,.55,.032,0,.14,.088,.087);held.visible=flash.visible=false;
+const prizes=[3.9,54.8].map(x=>{let g=flowerBlaster(scene);g.scale.setScalar(1.48);g.position.set(x,.67,.16);return {x,g}});
+const trails=Array.from({length:20},()=>{let g=group();egg(g,0xff8039,0,0,0,.18,.068,.068);egg(g,0xffeaa5,.10,0,.023,.108,.047,.047);g.visible=false;return {g,life:0}});
+let armed=false,shotCD=0,flame=0;
+function disarm(){armed=false;shotCD=flame=0;held.visible=flash.visible=false;for(let q of trails){q.life=0;q.g.visible=false}for(let p of prizes)p.g.visible=true;$('#fireStatus').hidden=$('#touchFire').hidden=true}
+function gunStep(dt){
+ for(let p of prizes){if(!p.g.visible)continue;p.g.position.y=.69+.11*Math.sin(age*3.8);p.g.rotation.y=.43*Math.sin(age*2.3);
+  if(Math.abs(P.x-p.x)<.68&&P.y<p.g.position.y+.27&&P.y+bodyH()>p.g.position.y-.22){armed=true;for(let v of prizes)v.g.visible=false;$('#fireStatus').hidden=$('#touchFire').hidden=false;
+   beep(440,.12,'triangle',.06,690);beep(680,.17,'triangle',.045,980,.08);msg(matchMedia('(pointer:coarse)').matches?'火花机关枪！按住「射」连发':'火花机关枪！按住 J 连发',2.5)}}
+ shotCD=Math.max(0,shotCD-dt);flame=Math.max(0,flame-dt);
+ if(armed&&keys.has('KeyJ')&&shotCD<=0){let q=trails.find(q=>q.life<=0);if(q){q.dir=P.facing;q.g.position.set(P.x,P.y+(big?.87:.73),.25);q.g.rotation.y=q.dir<0?Math.PI:0;q.g.visible=true;q.life=.60;q.first=true;flame=.052;beep(220,.058,'sawtooth',.033,56)}shotCD=.096}
+ for(let q of trails){if(q.life<=0)continue;let g=q.g,x=g.position.x,y=g.position.y,d=q.dir,len=22*dt+(q.first?.58:0),best=len,hit=null;q.first=false;
+  const test=(a,b,obj)=>{let near=d>0?a-x:x-b,far=d>0?b-x:x-a;if(far>=0&&near<=best){best=Math.max(0,near);hit=obj}};
+  for(let f of foes)if(!f.dead&&y>=f.y-.035&&y<=f.y+.94)test(f.x-.36,f.x+.36,f);
+  for(let s of solids)if(active(s)&&y>=s.bottom-.03&&y<=s.top+.03)test(s.a,s.b,s);
+  g.position.x+=d*best;q.life-=dt;if(hit){if(foes.includes(hit)){hit.dead=.001;burst(g.position.x,y,0xff9955,8);beep(185,.10,'triangle',.07,75)}else burst(g.position.x,y,0xedbc81,3);q.life=0}
+  if(q.life<=0)g.visible=false}
+}
+function gunPose(){held.visible=armed;if(!armed)return;held.rotation.y=P.facing<0?Math.PI:0;held.position.set(P.facing*(.16-.045*flame/.052),big?.84:.70,.23);flash.visible=flame>0;hero.arms.forEach(a=>a.rotation.x=-1.12)}
+
 function beep(f,d,type='sine',volume=.06,end=f,delay=0){if(!ac||!audio||ac.state!=='running')return;let o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(end,t+d);g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(volume,t+.009);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d+.02);o.onended=()=>{o.disconnect();g.disconnect()}}
 function soundOn(){try{ac??=new(window.AudioContext||window.webkitAudioContext)();ac.resume().catch(()=>{})}catch{}}
 const bgm=$('#bgm');bgm.volume=.42;
@@ -71,7 +98,7 @@ function msg(t,life=1.7){$('#toast').textContent=t;messageT=life}
 function mode(s){state=s;syncMusic();const playing=s==='play'||s==='dying'||s==='win';document.body.classList.toggle('playing',playing);$('#panel').hidden=playing;$('#hud').hidden=s==='menu';$('#pause').hidden=!['play','pause'].includes(s);$('#pause').textContent=s==='pause'?'继续 ▷':'暂停 Ⅱ';if(!playing)keys.clear();
  const copy={pause:['旅途小憩','山道暂停','跳跃位置已保留。','继续冒险'],over:['卷末 · 再起','再闯山道','这一程暂告一段落。准备好就再出发。','从头再来'],end:['第一卷 · 通关','山门旗扬','你收集了 '+points+' 枚金币，穿过了赤霞山道。','再玩一次']};
  if(copy[s]){let [k,t,m,b]=copy[s];$('#kicker').textContent=k;$('#title').textContent=t;$('#summary').textContent=m;$('#action').innerHTML=b+' <strong>→</strong>'}}
-function resetPlayer(){Object.assign(P,{x:saved?54.5:1,y:.02,vx:0,vy:0,facing:1,on:true});big=false;inv=.8;grace=.1;buf=0;camX=P.x+2.1;hero.root.visible=true}
+function resetPlayer(){disarm();Object.assign(P,{x:saved?54.5:1,y:.02,vx:0,vy:0,facing:1,on:true});big=false;inv=.8;grace=.1;buf=0;camX=P.x+2.1;hero.root.visible=true}
 function start(){points=0;stock=3;saved=false;age=0;bgm.currentTime=0;ferryAt(0,false);checkpoint.position.y=flag.position.y=1.35;
  for(let c of coins){c.used=false;c.g.visible=true}for(let b of blocks){b.used=b.broken=false;b.g.visible=true;b.anim=0;b.g.position.y=b.y;b.g.children.forEach(c=>c.visible=true);if(b.type!=='brick')b.g.children[0].material=mat(0xb97b36)}
  for(let f of foes){f.x=f.start;f.dead=0;f.v=-1.18;f.g.visible=true;f.g.scale.set(1,1,1)}
@@ -107,7 +134,7 @@ function step(dt){clock+=dt;if(['pause','menu','end','over'].includes(state))ret
  for(let s of solids){if(!active(s)||P.x+rad<=s.a+.001||P.x-rad>=s.b-.001)continue;
  if(P.vy<=0&&oldY>=s.top-.025&&ny<=s.top){ny=s.top;P.vy=0;P.on=true}
  else if(P.vy>0&&oldY+H<=s.bottom+.02&&ny+H>=s.bottom){ny=s.bottom-H;P.vy=0;bonk(s)}}
- P.y=ny;if(P.y< -4.2){die();return}
+ P.y=ny;if(P.y< -4.2){die();return}gunStep(dt);
  for(let c of coins){if(c.used)continue;if(Math.abs(c.x-P.x)<rad+.22&&c.y>P.y-.16&&c.y<P.y+H+.13){c.used=true;c.g.visible=false;earn(c.x,c.y)}}
  for(let b of blocks){if(b.anim>0){b.anim=Math.max(0,b.anim-dt);b.g.position.y=b.y+Math.sin(b.anim/.18*Math.PI)*.22}}
  for(let f of foes){if(f.dead>0){f.dead+=dt;f.g.scale.y=Math.max(.08,1-(f.dead-.001)*7);if(f.dead>.34)f.g.visible=false;continue}
@@ -129,7 +156,7 @@ function render(dt){if(width!==innerWidth||height!==innerHeight)resize();let t=c
  for(let c of coins){if(!c.used&&Math.abs(c.x-camX)<cam.right+2){c.g.rotation.y=t*2.7+c.x;c.g.position.y=c.y+.055*Math.sin(t*2+c.x)}}
  for(let f of foes){f.g.position.set(f.x,f.y+(f.dead?0:.034*Math.abs(Math.sin(age*7+f.a))),0);f.g.rotation.z=f.dead?0:Math.sin(age*7+f.a)*.047}
  if(state!=='pause')for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t-=dt;s.g.position.x+=s.xv*dt;s.g.position.y+=s.yv*dt;s.yv-=8*dt;s.g.rotation.z+=dt*5;if(s.t<=0){scene.remove(s.g);sparks.splice(i,1)}}
- R.render(scene,cam)}
+ gunPose();R.render(scene,cam)}
 resize();hud();let last=performance.now(),bank=0;function loop(now){let dt=Math.min(.065,(now-last)/1000);last=now;bank+=dt;while(bank>=1/120){step(1/120);bank-=1/120}render(dt);requestAnimationFrame(loop)}requestAnimationFrame(loop);
 }
 try{boot()}catch(e){$('#summary').textContent='未能启动 3D 画面。请使用支持 WebGL 的浏览器并启用硬件加速。';$('#action').hidden=true;console.error(e)}

@@ -1,9 +1,9 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#241e20"><title>超级马里奥 · 赤霞山道</title><link rel="stylesheet" href="style.css"></head><body>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#241e20"><title>超级马里奥 · 赤霞山道</title><link rel="stylesheet" href="style.css?v=3"></head><body>
 <canvas id="sky"></canvas><div id="world"></div><div id="grain"></div>
 <header><div class="brand"><i>山</i><span>山 海 游 记<small>SHANHAI ARCADE</small></span></div><div class="toolbar"><button id="music" aria-label="切换声音">声音 · 开</button><button id="pause" hidden>暂停 Ⅱ</button></div></header>
-<div id="hud" hidden><b id="area">赤霞山道</b><span id="score">◎ 00</span><span id="lives"></span></div>
-<section id="panel"><div class="folio">山海绘卷 <em></em> 第一卷</div><p id="kicker">SUPER MARIO　/　THE CINDER PASS</p><h1 id="title">超级马里奥<span>赤霞山道</span></h1><p id="summary">踏过玄岩，跃起顶砖。赶在落日之前，<br>把山门的旗帜升起来。</p><button id="action">进入山道 <strong>→</strong></button><div id="keys">A D / ← → 移动　·　空格跳跃　·　Shift 疾跑</div></section>
-<div id="toast" role="status"></div><div id="touch"><div><button data-key="ArrowLeft" aria-label="左移">◀</button><button data-key="ArrowRight" aria-label="右移">▶</button></div><div><button data-key="ShiftLeft">跑</button><button data-key="Space">跳</button></div></div>
+<div id="hud" hidden><b id="area">赤霞山道</b><span id="score">◎ 00</span><span id="lives"></span><span id="fireStatus" hidden>火花枪 ∞</span></div>
+<section id="panel"><div class="folio">山海绘卷 <em></em> 第一卷</div><p id="kicker">SUPER MARIO　/　THE CINDER PASS</p><h1 id="title">超级马里奥<span>赤霞山道</span></h1><p id="summary">踏过玄岩，跃起顶砖。赶在落日之前，<br>把山门的旗帜升起来。</p><button id="action">进入山道 <strong>→</strong></button><div id="keys">A D / ← → 移动　·　空格跳跃　·　Shift 疾跑　·　J 连射</div></section>
+<div id="toast" role="status"></div><div id="touch"><div><button data-key="ArrowLeft" aria-label="左移">◀</button><button data-key="ArrowRight" aria-label="右移">▶</button></div><div><button id="touchFire" data-key="KeyJ" hidden aria-label="按住连续射击">射</button><button data-key="ShiftLeft">跑</button><button data-key="Space">跳</button></div></div>
 <footer><span>壹　/　横卷冒险</span><span>非官方同人小游戏　·　程序化绘制</span></footer>
 <audio id="bgm" loop preload="none"><source src="audio/super-mario.ogg" type='audio/ogg; codecs="opus"'><source src="audio/super-mario.m4a" type='audio/mp4; codecs="mp4a.40.2"'></audio>
-<script src="../three.min.js"></script><script src="sky.js"></script><script src="play.js?v=2"></script></body></html>
+<script src="../three.min.js"></script><script src="sky.js"></script><script src="play.js?v=3"></script></body></html>
