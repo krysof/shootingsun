@@ -1,4 +1,4 @@
-﻿/* Geometry and maps only. The game owns targeting, flight phases, damage and spawning. */
+/* Geometry and maps only. The game owns targeting, flight phases, damage and spawning. */
 function createSolarBestiary({node,surface,batch,reflections}){
  const TAU=2*Math.PI,clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),mix=(a,b,t)=>a+(b-a)*t;
  const rand=seed(19011),templates=new Map(),minorRig=new WeakMap();let M,coarse=false;
@@ -125,8 +125,9 @@ function createSolarBestiary({node,surface,batch,reflections}){
    ell(arm,M.cinder,a*.247,-.49,-.12,.077,.093,.070);
    for(let j=0;j<3;j++){let x=a*(.222+.030*j),z=-.15+.025*j;let mid=V(x+a*.025,-.62+.018*j,z-.052);tapered(arm,M.coal,[V(x,-.51,z),mid,V(x-a*.013,-.658+.015*j,z-.114)],[.026,.019,.003],9)}
    tapered(arm,M.tip,[V(a*.196,-.49,-.14),V(a*.15,-.551,-.17),V(a*.172,-.592,-.197)],[.031,.022,.003],8);
-   let hip=V(a*.144,-.25,.056),knee=V(a*.218,-.446,-.011),heel=V(a*.188,-.586,.133);tapered(r,M.cinder,[hip,knee,heel,V(a*.182,-.69,.047)],[.119,.088,.061,.050],12);shard(r,hip.clone().add(V(0,0,-.049)),knee.clone().add(V(0,-.066,-.044)),.088,.067,M.obsidian,2);
-   for(let j=-1;j<=1;j++)tapered(r,M.coal,[V(a*.182,-.685,.068),V(a*.18+j*.044,-.71,-.014),V(a*.18+j*.069,-.741,-.083)],[.026,.018,.003],8);batch(arm)}
+   const pivot=node(r,a*.144,-.25,.056),leg=node(pivot,-a*.144,.25,-.056);pivot.name=a<0?'leftLeg':'rightLeg';
+   let hip=V(a*.144,-.25,.056),knee=V(a*.218,-.446,-.011),heel=V(a*.188,-.586,.133);tapered(leg,M.cinder,[hip,knee,heel,V(a*.182,-.69,.047)],[.119,.088,.061,.050],12);shard(leg,hip.clone().add(V(0,0,-.049)),knee.clone().add(V(0,-.066,-.044)),.088,.067,M.obsidian,2);
+   for(let j=-1;j<=1;j++)tapered(leg,M.coal,[V(a*.182,-.685,.068),V(a*.18+j*.044,-.71,-.014),V(a*.18+j*.069,-.741,-.083)],[.026,.018,.003],8);batch(leg);batch(arm)}
   shape(head,M.cinder,[[-.181,.071,.095,.077,0],[-.13,.15,.17,.137,.023],[0,.164,.187,.162,.031],[.13,.137,.156,.128,.019],[.19,.05,.08,.06,.02]],18);
   for(let a of [-1,1]){shard(head,V(a*.042,.10,-.144),V(a*.142,.289,.009),.077,.083,M.obsidian,3);shard(head,V(a*.023,.061,-.176),V(a*.168,.123,-.087),.047,.037,M.coal,1);
    ell(head,M.ember,a*.085,.044,-.156,.042,.016,.023);shard(head,V(a*.131,.033,-.103),V(a*.041,-.141,-.155),.052,.043,M.obsidian,6)}

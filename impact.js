@@ -1,4 +1,4 @@
-﻿/* Transient, world-space combat response only. Corpses are visual snapshots, never targets. */
+/* Transient, world-space combat response only. Corpses are visual snapshots, never targets. */
 const impactFX=(()=>{
  const states=new Map(),falls=[],pools=[],voices=new Set(),stepRay=new THREE.Raycaster(),segment=new THREE.Line3(),near=new THREE.Vector3();
  const cap=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),smooth=x=>(x=cap(x))*x*(3-2*x),between=(a,b)=>a+(b-a)*Math.random();
@@ -58,9 +58,9 @@ const impactFX=(()=>{
   spray(0,at,d,hard?22:13,boss?7.4:4.8,boss?.082:.055,.32);spray(stone?2:1,at,d,hard?8:4,boss?4.7:2.7,boss?.125:.069,.72);spray(3,at,d,boss?9:5,2,.033,.51);particles(0);
   sfx(stone?'stone':'feather',at,boss);return d}
  function spring(s,dt){s.velocity.addScaledVector(s.offset,-86*dt);s.velocity.multiplyScalar(Math.exp(-8*dt));s.offset.addScaledVector(s.velocity,dt);s.sway=Math.max(0,s.sway-dt*4.3)}
- function minion(m,dt){let s=states.get(m),a=m.userData,b=a.base;if(s){let held=Math.min(s.stun,dt);s.stun-=held;s.debt+=held;spring(s,dt)}
-  let t=gameT+a.time-(s?.debt||0);m.position.set(b.x+Math.sin(t)*2.6,height(b.x,b.z)+2+Math.sin(t*2),b.z+Math.cos(t)*2.6);
-  m.rotation.set(s?-s.sway*.26:0,t,s?s.side*s.sway*.31:0);if(s)m.position.add(s.offset);motion.poseMinion(m,t);return !(s&&s.stun>.00001)}
+ function minion(m,dt){let s=states.get(m),held=s&&s.stun>0;if(s){s.stun=Math.max(0,s.stun-dt);spring(s,dt)}
+  minionAI.frame(m,dt,held);if(s){let flat=V(s.offset.x,0,s.offset.z),len=flat.length();if(len>.001)rockField.move(m.position,flat.normalize(),len);m.position.y+=s.offset.y;m.rotation.x-=s.sway*.26;m.rotation.z+=s.side*s.sway*.31}return !held}
+ function rock(p,velocity){let d=velocity.clone().normalize().negate();spray(2,p,d,7,2.8,.054,.46);spray(3,p,d,5,1.35,.039,.36);particles(0);sfx('stone',p)}
  function burnMaterial(src,uniform,flare){const m=src.clone();const old=src.onBeforeCompile,cache=src.customProgramCacheKey();m.customProgramCacheKey=()=>cache+'|corpse-ash-v1';
   m.onBeforeCompile=function(shader,renderer){old.call(this,shader,renderer);shader.uniforms.uAsh=uniform;shader.uniforms.uFlare=flare;
    shader.vertexShader='varying vec3 vAshP;\n'+shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vAshP=(modelMatrix*vec4(transformed,1.)).xyz;');
@@ -100,5 +100,5 @@ const impactFX=(()=>{
    if(o===enemy){spring(s,dt);bodyPivot.position.copy(s.offset).applyQuaternion(enemy.quaternion.clone().invert());bodyPivot.rotation.set(-.13*s.sway,0,s.side*.145*s.sway)}}
   for(let i=falls.length-1;i>=0;i--)if(advanceFall(falls[i],dt)){purge(falls[i]);falls.splice(i,1)}
   particles(dt)}
- return {reset,resetBoss,contact,strike,death,minion,update}
+ return {rock,reset,resetBoss,contact,strike,death,minion,update}
 })();

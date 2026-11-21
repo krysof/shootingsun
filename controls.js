@@ -1,4 +1,4 @@
-﻿/* The reticle never moves. A bounded off-axis lens handles small corrections;
+/* The reticle never moves. A bounded off-axis lens handles small corrections;
    only motion which overflows the lens rotates the third-person camera boom. */
 const mouseSight=(()=>{
   const {Vector3,Vector2,Sphere,Raycaster,MathUtils}=THREE;
@@ -47,7 +47,7 @@ const mouseSight=(()=>{
   }
   function resolve(){
     C.updateMatrixWorld();rc.setFromCamera(screen,C);
-    let depth=groundRange(rc.ray,far);hover=null;
+    let depth=groundRange(rc.ray,far);let wall=rockField.first(rc.ray.origin,rc.ray.at(depth,scratch));if(Number.isFinite(wall))depth*=wall;hover=null;
     for(const o of [enemy,...critters]){if(!o?.visible)continue;
       sphere.center.copy(o.position);sphere.radius=o===enemy?3.1:.98;
       if(rc.ray.intersectSphere(sphere,scratch)){let d=rc.ray.origin.distanceTo(scratch);if(d<depth){depth=d;hover=o}}
@@ -67,6 +67,8 @@ const mouseSight=(()=>{
     if(stagger>0&&slow>0)camPos.lerp(bossPos,.2);
     C.position.lerp(camPos,snapCamera?1:1-Math.exp(-dt*15));snapCamera=false;
     shake=Math.max(0,shake-dt*1.6);C.position.x+=Math.sin(realT*67)*shake*.22;
+    const pivot=scratch.copy(pos());pivot.y+=1.35;const wall=rockField.first(pivot,C.position);
+    if(Number.isFinite(wall))C.position.lerpVectors(pivot,C.position,Math.max(0,wall-.20/Math.max(.20,pivot.distanceTo(C.position))));
     C.rotation.set(pitch,yaw,0,'YXZ');adjustLens();resolve();
     facing.copy(point).sub(pos());const bodyYaw=Math.atan2(-facing.x,-facing.z);
     const d=Math.atan2(Math.sin(bodyYaw-hero.rotation.y),Math.cos(bodyYaw-hero.rotation.y));
